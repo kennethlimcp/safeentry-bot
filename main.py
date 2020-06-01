@@ -4,11 +4,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import time, csv
+from selenium.webdriver.support.ui import Select
 
 DOWNLOAD_DIR = ""
+
 UEN_ID = ""
 CORPPASS_ID = ""
 PASSWORD = ""
+EMAIL_ADDRESSES = ""
 
 chromeOptions = webdriver.ChromeOptions()
 preferences = {"download.default_directory": DOWNLOAD_DIR ,
@@ -58,8 +61,10 @@ def main():
 
     driver.find_element_by_link_text("Proceed to Login").click()
 
+    time.sleep(5)
     waitForElementPresent(By.ID, "password")
     waitForElementNotPresent(By.CLASS_NAME, "loader")
+
     element = driver.find_element_by_id("entityId")
     element.send_keys(UEN_ID)
 
@@ -83,21 +88,19 @@ def main():
 
     lineCount = 0
     totalTime = 0 
-    
+
+    logFile =  open('./log.txt', "a+")
     with open('./locations.csv') as f:
         rows = csv.reader(f, delimiter=',')
         
         # Iterate through all the rows in CSV
         for r in rows:
-            qrCodeAddress = r[0]
-            postalCode = r[1]
-            venueName = r[2]
-            branchShortName = r[3]
+            postalCode = r[0]
+            venueName = r[1]
             lineCount += 1
 
             # Show what is read for that row in CSV file
-            print("Original", qrCodeAddress, postalCode, venueName, sep=",")
-            input('Block just in case you need to abort')
+            print("Original", postalCode, venueName, sep=",")
             start = time.time()
 
             # Click on Apply For SafeEntry (New)
@@ -105,25 +108,26 @@ def main():
             element = driver.find_element_by_link_text("Apply For SafeEntry New")
             element.click()
 
-            # Address of the location
-            element = driver.find_element_by_id("qrCodeAddress")
-            element.clear()
-            element.send_keys(qrCodeAddress)
+            # Click on Premises with Address
+            # element = driver.find_element_by_xpath("//mat-radio-button[@id='mat-radio-2']/label/div/div")
+            # element.click()
 
             # Postal code of the location
             element = driver.find_element_by_id("postalCode")
             element.clear()
             element.send_keys(postalCode)
 
-            # Public information of location shown on the app when QR code is scanned
+            # Venue name of the location
             element = driver.find_element_by_id("venueName")
             element.clear()
             element.send_keys(venueName)
-
-            # Private name of your choice
-            element = driver.find_element_by_id("branchShortName")
+            
+            # Fill up email addresses
+            element = driver.find_element_by_id('partnerEmails')
             element.clear()
-            element.send_keys(branchShortName)
+            element.send_keys(EMAIL_ADDRESSES)
+
+            input('Check dropdown list for Block information')
 
             # Submit the SafeEntry application
             element = driver.find_element_by_xpath("//button[contains(.,'Submit Request')]")
@@ -146,21 +150,29 @@ def main():
 
             # Grab what is in the applied SafeEntry information and display it
             waitForElementPresent(By.ID, "venueName")
-            applied_qrCodeAddress = driver.find_element_by_id("qrCodeAddress").get_attribute('value')
-            apppled_postalCode = driver.find_element_by_id("postalCode").get_attribute('value')
-            apppled_venueName = driver.find_element_by_id("venueName").get_attribute('value')
+            applied_postalCode = driver.find_element_by_id("postalCode").get_attribute('value')
+            applied_venueName = driver.find_element_by_id("venueName").get_attribute('value')
 
             # Calculate time taken to create a QR code
             end = time.time()
             timeTaken = end - start
-            print(timeTaken)
             totalTime += timeTaken
 
+            logFile.write(str(lineCount))
+            logFile.write(',')
+            logFile.write(applied_postalCode)
+            logFile.write(',')
+            logFile.write(applied_venueName)
+            logFile.write(',')
+            logFile.write(str(timeTaken))
+            logFile.write('\n')
+            
+
             # Print the applied SafeEntry information and display it
-            print(lineCount, applied_qrCodeAddress, apppled_postalCode, apppled_venueName, sep=',')
-            time.sleep(5)
+            print(lineCount, applied_postalCode, applied_venueName, timeTaken, sep=',')
 
     f.close()   
+    logFile.close()
     print('Time taken: ', totalTime) 
 
 if __name__ == "__main__":
