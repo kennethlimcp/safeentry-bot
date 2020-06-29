@@ -19,7 +19,7 @@ preferences = {"download.default_directory": DOWNLOAD_DIR ,
                "safebrowsing.enabled": True }
 chromeOptions.add_experimental_option("prefs", preferences)
 
-driver = webdriver.Chrome(chrome_options=chromeOptions,executable_path="./chromedriver")
+driver = webdriver.Chrome(options=chromeOptions,executable_path="./chromedriver")
 
 def waitForElementPresent(type, elementName):
     try:
@@ -51,14 +51,11 @@ def waitForUrl(timeout, desiredUrl):
         driver.quit()
     
 def main():
-    driver.get("http://ndi-api.gov.sg/safeentry")
+    driver.get("https://www.ndi-api.gov.sg/cplogin")
     driver.set_window_size(1280, 777)
 
     # Go to Safe Entry website
-    waitForElementPresent(By.XPATH, "//button[contains(.,'Get my SafeEntry QR now!')]")
-    element = driver.find_element_by_xpath("//button[contains(.,'Get my SafeEntry QR now!')]")
-    element.click()
-
+    waitForElementPresent(By.LINK_TEXT, "Proceed to Login")
     driver.find_element_by_link_text("Proceed to Login").click()
 
     time.sleep(5)
@@ -173,6 +170,7 @@ def main():
 
     f.close()   
     logFile.close()
+    driver.quit()
     print('Time taken: ', totalTime) 
 
 if __name__ == "__main__":
